@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# chalice
+.chalice/deployed/*
+.chalice/deployments/*
+.chalice/config.json
+
+# app
+config.json
+
+
