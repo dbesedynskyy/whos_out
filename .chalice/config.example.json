@@ -1,0 +1,20 @@
+{
+  "version": "2.0",
+  "app_name": "whosout",
+  "stages": {
+    "dev": {
+      "manage_iam_role": true,
+      "iam_role_arn": "",
+      "autogen_policy": true,
+      "lambda_timeout": 60,
+      "lambda_memory_size": 128,
+      "environment_variables": {
+        "BAMBOO_TOKEN": "",
+        "SLACK_HOOK": ""
+      },
+      "tags": {
+        "Environment": "dev"
+      }
+    }
+  }
+}

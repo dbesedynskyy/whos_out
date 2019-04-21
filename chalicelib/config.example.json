@@ -1,0 +1,17 @@
+{
+    "BAMBOO_TOKEN_TEST": "",
+    "BAMBOO_ORG_TEST": "",
+    "SLACK_HOOK_TEST": "",
+    
+    "days": 14,
+    "teams": [
+        { 
+            "name": "Team name",
+            "channel": "Slack channel",
+            "members": [
+                "John Doe", 
+                "Jane Doe"
+            ]
+        }
+    ]
+}
