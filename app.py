@@ -128,8 +128,8 @@ def PostTeamVacations(team, vacation_list, holiday_list):
     _postSlack(team["name"], team["channel"], team_vacations, holiday_dates, daily_quote)
 
 # Load configuration
-#app = Chalice(app_name='whosout')
-#@app.schedule('cron(0 12 ? * MON-FRI *)')
+app = Chalice(app_name='whosout')
+@app.schedule('cron(0 12 ? * MON-FRI *)')
 def run_schedule(event):
 
     teams = config.getTeams()
@@ -144,20 +144,3 @@ def run_schedule(event):
     # Post vacation information for each team
     for team in teams:
         PostTeamVacations(team, result[0], result[1])
-
-run_schedule(None)
-
-#print("test")
-#import json
-#import random
-
-#with open('./chalicelib/quotes.json') as json_file:
-#    json_data = json.load(json_file)
-#    count = len(json_data["data"])
-    
-#    index = random.randint(0, count)
-#    print(index, ": ", json_data["data"][index])    
-#    with open('./chalicelib/quotes.jsonl', 'w') as outfile:
-#        for entry in json_data["data"]:
-#            json.dump(entry, outfile)
-#            outfile.write('\n')
