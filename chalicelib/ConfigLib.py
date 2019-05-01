@@ -32,3 +32,5 @@ class ConfigHelper():
     def getBambooKey(self):
         return self._tryGetEnvironmentParameter("BAMBOO_TOKEN", None)
         
+    def getSlackHook(self):
+        return self._tryGetEnvironmentParameter("SLACK_HOOK", None)

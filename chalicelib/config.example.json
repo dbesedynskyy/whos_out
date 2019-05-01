@@ -8,6 +8,7 @@
         { 
             "name": "Team name",
             "channel": "Slack channel",
+            "daily_quote": false,
             "members": [
                 "John Doe", 
                 "Jane Doe"

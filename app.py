@@ -1,10 +1,15 @@
 import logging
 import datetime
 import requests
+import json
 
 from chalice import Chalice
 from chalicelib import BambooLib
 from chalicelib import ConfigLib
+from chalicelib import QuoteLib
+
+# Global configuration
+config = ConfigLib.ConfigHelper()
 
 def _getNextBusinessDay(start_day, HOLIDAYS):
     ONE_DAY = datetime.timedelta(days=1)
@@ -18,7 +23,7 @@ def _getNextBusinessDay(start_day, HOLIDAYS):
 def _getVacationText(vacation, holiday_list):
     start_date = datetime.datetime.strptime(vacation.start_date, '%Y-%m-%d')
     end_date = datetime.datetime.strptime(vacation.end_date, '%Y-%m-%d')
-    return_date = next_business_day(end_date, holiday_list)
+    return_date = _getNextBusinessDay(end_date, holiday_list)
     n_days = (return_date - start_date).days
 
     start_date_text = start_date.strftime('%A %B %-d')
@@ -33,7 +38,10 @@ def _getSlackMessage(team_name, vacations):
         slack_message = 'The following people have *booked time off in the next 14 days:*'.format(team_name)
     return slack_message
 
-def _postSlack(team_name, team_channel, team_vacations, holiday_dates):
+def _getDailyQuote(quote_config):
+    return QuoteLib.QuoteHelper.getQuote()
+
+def _postSlack(team_name, team_channel, team_vacations, holiday_dates, daily_quote):
     vacation_text = []
     slack_message = _getSlackMessage(team_name, team_vacations)
     
@@ -60,6 +68,26 @@ def _postSlack(team_name, team_channel, team_vacations, holiday_dates):
                 "text": "\n".join(vacation_text)
             }
         })
+    if daily_quote:
+        slack_blocks.append({
+            "type": "divider"
+        })
+        slack_blocks.append({
+            "type": "section",
+            "text" : {
+                "type": "mrkdwn",
+                "text": ">>> _{0}_".format(daily_quote["quote"])
+            }
+        })
+        slack_blocks.append({
+		    "type": "context",
+		    "elements": [
+			    {
+				    "type": "mrkdwn",
+				    "text": "*Author:* {0}".format(daily_quote["author"])
+			    }
+		    ]
+        })
 
     slack_data = {
         'text': slack_message,
@@ -69,8 +97,9 @@ def _postSlack(team_name, team_channel, team_vacations, holiday_dates):
         "blocks": slack_blocks
     }
     print("Posting slack message for {0}: {1}".format(team_name, slack_data))
+    slack_hook = config.getSlackHook()
     response = requests.post(
-        SLACK_HOOK, data=json.dumps(slack_data),
+        slack_hook, data=json.dumps(slack_data),
         headers={'Content-Type': 'application/json'}
     )
 
@@ -89,17 +118,20 @@ def PostTeamVacations(team, vacation_list, holiday_list):
         if vacation.name in team['members']:
             team_vacations.add(vacation)
     
+    print('Getting daily quote')
+    daily_quote = None
+    if(team['daily_quote']):
+        daily_quote = _getDailyQuote(team['daily_quote'])
+
     # TODO: separate slack related routines 
     team_vacations = sorted(team_vacations, key=_getVacationSortKey)
-    _postSlack(team["name"], team["channel"], team_vacations, holiday_dates)
+    _postSlack(team["name"], team["channel"], team_vacations, holiday_dates, daily_quote)
 
 # Load configuration
-app = Chalice(app_name='whosout')
-@app.schedule('cron(0 12 ? * MON-FRI *)')
+#app = Chalice(app_name='whosout')
+#@app.schedule('cron(0 12 ? * MON-FRI *)')
 def run_schedule(event):
 
-    config = ConfigLib.ConfigHelper()
-    
     teams = config.getTeams()
     days = config.getDays()
     
@@ -112,3 +144,20 @@ def run_schedule(event):
     # Post vacation information for each team
     for team in teams:
         PostTeamVacations(team, result[0], result[1])
+
+run_schedule(None)
+
+#print("test")
+#import json
+#import random
+
+#with open('./chalicelib/quotes.json') as json_file:
+#    json_data = json.load(json_file)
+#    count = len(json_data["data"])
+    
+#    index = random.randint(0, count)
+#    print(index, ": ", json_data["data"][index])    
+#    with open('./chalicelib/quotes.jsonl', 'w') as outfile:
+#        for entry in json_data["data"]:
+#            json.dump(entry, outfile)
+#            outfile.write('\n')
